@@ -1,4 +1,5 @@
 #include "main.h"
+#include "functions.h"
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
@@ -8,9 +9,9 @@
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(240, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(TOTAL_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
-void initStrip(){
+void initStrip(void){
   strip.begin();
   strip.setBrightness(50);
   strip.show(); // Initialize all pixels to 'off'
@@ -102,15 +103,20 @@ uint32_t Wheel(byte WheelPos) {
 }
 
 void showColors(uint16_t player1Leds, uint16_t player2Leds){
-    uint16_t tempPlayer1Leds = player1Leds;
-    uint16_t tempPlayer2Leds = player2Leds; 
+    uint16_t numPixels = strip.numPixels();
+    uint16_t tempPlayer1Leds = (player1Leds > numPixels) ? numPixels : player1Leds;
+    uint16_t tempPlayer2Leds = (player2Leds > numPixels) ? numPixels : player2Leds; 
 
-    if(player1Leds+player2Leds > strip.numPixels()){
-        if(player1Leds>player2Leds){
-            tempPlayer2Leds = strip.numPixels() - player1Leds;
+    if(tempPlayer1Leds + tempPlayer2Leds > numPixels){
+        if(tempPlayer1Leds > tempPlayer2Leds){
+            tempPlayer2Leds = numPixels - tempPlayer1Leds;
+        }
+        else if(tempPlayer2Leds > tempPlayer1Leds){
+            tempPlayer1Leds = numPixels - tempPlayer2Leds;
         }
         else{
-            tempPlayer1Leds = strip.numPixels() - player2Leds;
+            tempPlayer1Leds = numPixels / 2;
+            tempPlayer2Leds = numPixels - tempPlayer1Leds;
         }
     }
 
@@ -118,11 +124,11 @@ void showColors(uint16_t player1Leds, uint16_t player2Leds){
         strip.setPixelColor(j, Wheel(80));
     }
 
-    for(uint16_t j=tempPlayer1Leds; j<(240-tempPlayer2Leds); j++){
+    for(uint16_t j=tempPlayer1Leds; j<(numPixels - tempPlayer2Leds); j++){
         strip.setPixelColor(j, 0);
     }
 
-    for(uint16_t j=(240-tempPlayer2Leds); j<240; j++) {
+    for(uint16_t j=(numPixels - tempPlayer2Leds); j<numPixels; j++) {
         strip.setPixelColor(j, Wheel(255));
     }
 
